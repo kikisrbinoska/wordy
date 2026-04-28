@@ -1,4 +1,5 @@
 package wp.finki.wordy.model.domain;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,9 +13,11 @@ public class DocumentAsset {
     private Long id;
 
     @ManyToOne
+    @JsonIgnoreProperties({"owner", "content", "ydocState"})
     private Document document;
 
     @ManyToOne
+    @JsonIgnoreProperties({"permissions", "content", "ydocState"})
     private User uploader;
 
     private String fileName;

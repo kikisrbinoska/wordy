@@ -1,4 +1,4 @@
-package wp.finki.wordy.controller;
+package wp.finki.wordy.web.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

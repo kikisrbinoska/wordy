@@ -1,4 +1,5 @@
 package wp.finki.wordy.model.domain;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import wp.finki.wordy.model.enumerations.DocumentRole;
@@ -13,9 +14,11 @@ public class DocumentPermission {
     private Long id;
 
     @ManyToOne
+    @JsonIgnoreProperties({"permissions", "content", "ydocState"})
     private User user;
 
     @ManyToOne
+    @JsonIgnoreProperties({"owner", "content", "ydocState"})
     private Document document;
 
     @Enumerated(EnumType.STRING)

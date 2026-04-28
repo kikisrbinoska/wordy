@@ -3,7 +3,6 @@ package wp.finki.wordy.model.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import wp.finki.wordy.model.enumerations.SystemRole;
@@ -11,12 +10,11 @@ import wp.finki.wordy.model.enumerations.SystemRole;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @Data
 @Entity
 @Table(name = "shop_users")
-public class User implements UserDetails{
+public class User implements UserDetails {
     @Id
     private String username;
 
@@ -34,9 +32,13 @@ public class User implements UserDetails{
     private LocalDateTime createdAt;
     private LocalDateTime lastSeenAt;
 
+    @JsonIgnore
     private boolean isAccountNonExpired = true;
+    @JsonIgnore
     private boolean isAccountNonLocked = true;
+    @JsonIgnore
     private boolean isCredentialsNonExpired = true;
+    @JsonIgnore
     private boolean isEnabled = true;
 
     @Enumerated(value = EnumType.STRING)
@@ -83,34 +85,37 @@ public class User implements UserDetails{
         this.username = userDetails.getUsername();
         this.password = userDetails.getPassword();
     }
-    public User(){
 
+    public User() {
     }
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList((GrantedAuthority) role);
     }
 
-
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return isAccountNonExpired;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return isAccountNonLocked;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return isCredentialsNonExpired;
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return isEnabled;
     }
-
 }
