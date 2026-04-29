@@ -33,6 +33,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                // JwtAuthFilter also reads the token from ?token= for SSE endpoints
+                // where browsers cannot send Authorization headers via EventSource.
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
