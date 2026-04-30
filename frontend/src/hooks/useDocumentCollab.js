@@ -71,11 +71,7 @@ export function useDocumentCollab(docId, editor, token) {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          type: 'text-change',
-          content,
+          Authorizn
         }),
       }).catch((err) => {
         console.error('[useDocumentCollab] Failed to publish update:', err);

@@ -38,15 +38,7 @@ public class CollabSseController {
     private final DocumentRepository documentRepository;
     private final DocumentPermissionRepository documentPermissionRepository;
 
-    /**
-     * Opens an SSE stream for the authenticated user on a document room.
-     *
-     * On first connection to a document, this node also subscribes the shared
-     * RedisDocumentListener to the Redis channel so messages from other nodes
-     * arrive here too.
-     *
-     * The client should include the JWT Bearer token in the Authorization header.
-     */
+
     @Operation(summary = "Open SSE stream for real-time document updates")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "SSE stream opened"),
@@ -67,11 +59,9 @@ public class CollabSseController {
             collabService.subscribeToDocument(docId, redisDocumentListener);
         }
 
-        // Unsubscribe from Redis when this node has no more active emitters for the document
         emitter.onCompletion(() -> unsubscribeIfEmpty(docId));
         emitter.onTimeout(() -> unsubscribeIfEmpty(docId));
 
-        // Send a "connected" heartbeat so the client knows the stream is alive
         try {
             emitter.send(SseEmitter.event()
                     .name("connected")
@@ -84,11 +74,7 @@ public class CollabSseController {
         return emitter;
     }
 
-    /**
-     * Receives a Tiptap JSON change from the authenticated user, stamps it with
-     * the sender and current timestamp, and publishes it on Redis so every Spring
-     * node fan-fans the update to their connected SSE clients.
-     */
+    
     @Operation(summary = "Send a document update (publishes to Redis → SSE fan-out)")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Update published"),
@@ -114,15 +100,12 @@ public class CollabSseController {
         return ResponseEntity.noContent().build();
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+   
 
     private void requireReadAccess(Long docId, String username) {
         if (!documentRepository.existsById(docId)) {
             throw new DocumentNotFoundException(docId);
         }
-        // Owner or any permission holder can read
         boolean isOwner = documentRepository.findById(docId)
                 .map(d -> d.getOwner().getUsername().equals(username))
                 .orElse(false);
@@ -165,10 +148,6 @@ public class CollabSseController {
             log.info("Unsubscribed Redis listener for doc {} (no active SSE clients)", docId);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Inner DTO
-    // -------------------------------------------------------------------------
 
     @Data
     static class UpdateRequest {

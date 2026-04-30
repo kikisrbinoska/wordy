@@ -8,22 +8,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Manages one SseEmitter per (docId, username) pair.
- * A single instance lives for the lifetime of the application; emitters come and go.
- */
 @Slf4j
 @Service
 public class CollabSseService {
 
-    /** docId → { username → SseEmitter } */
     private final ConcurrentHashMap<Long, ConcurrentHashMap<String, SseEmitter>> rooms =
             new ConcurrentHashMap<>();
 
-    /**
-     * Creates (or replaces) an SseEmitter for the given user inside a document room.
-     * The emitter has a 30-minute timeout; on completion/timeout/error it removes itself.
-     */
     public SseEmitter register(Long docId, String username) {
         SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
 
@@ -41,7 +32,6 @@ public class CollabSseService {
     }
 
     /**
-     * Broadcasts a JSON payload to every connected user in the room except the sender.
      *
      * @param docId        target document
      * @param senderUsername user who originated the change (excluded from fan-out)
@@ -68,7 +58,6 @@ public class CollabSseService {
         });
     }
 
-    /** Returns true if there is at least one connected emitter for this document. */
     public boolean hasActiveEmitters(Long docId) {
         Map<String, SseEmitter> room = rooms.get(docId);
         return room != null && !room.isEmpty();
