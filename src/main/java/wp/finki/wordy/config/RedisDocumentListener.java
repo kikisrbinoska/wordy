@@ -7,7 +7,7 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import wp.finki.wordy.model.dto.DocUpdateDto;
-import wp.finki.wordy.service.domain.CollabSseService;
+import wp.finki.wordy.service.domain.impl.CollabSseService;
 
 /**
  * Single application-level Redis MessageListener.

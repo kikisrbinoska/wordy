@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import wp.finki.wordy.model.exceptions.DocumentPermissionException;
 import wp.finki.wordy.repository.DocumentPermissionRepository;
 import wp.finki.wordy.repository.DocumentRepository;
 import wp.finki.wordy.service.domain.CollabService;
-import wp.finki.wordy.service.domain.CollabSseService;
+import wp.finki.wordy.service.domain.impl.CollabSseService;
 
 import java.time.Instant;
 
@@ -150,6 +151,7 @@ public class CollabSseController {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     static class UpdateRequest {
         /** text-change | cursor | presence */
         private String type;
