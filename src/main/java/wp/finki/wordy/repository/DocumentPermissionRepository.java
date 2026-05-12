@@ -13,4 +13,5 @@ public interface DocumentPermissionRepository
     Optional<DocumentPermission> findByDocumentIdAndUserUsername(Long docId, String username);
     List<DocumentPermission> findAllByDocumentId(Long docId);
     boolean existsByDocumentIdAndUserUsername(Long docId, String username);
+    void deleteAllByDocumentId(Long docId);
 }

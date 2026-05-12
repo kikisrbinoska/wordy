@@ -2,12 +2,14 @@ package wp.finki.wordy.service.domain.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import wp.finki.wordy.model.domain.Document;
 import wp.finki.wordy.model.domain.DocumentPermission;
 import wp.finki.wordy.model.domain.DocumentVersion;
 import wp.finki.wordy.model.domain.User;
 import wp.finki.wordy.model.enumerations.DocumentRole;
 import wp.finki.wordy.model.exceptions.*;
+import wp.finki.wordy.repository.DocumentAssetRepository;
 import wp.finki.wordy.repository.DocumentPermissionRepository;
 import wp.finki.wordy.repository.DocumentRepository;
 import wp.finki.wordy.repository.DocumentVersionRepository;
@@ -27,6 +29,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final UserRepository userRepository;
     private final DocumentPermissionRepository permissionRepository;
     private final DocumentVersionRepository versionRepository;
+    private final DocumentAssetRepository assetRepository;
 
 
     private Document getDocument(Long id) {
@@ -88,7 +91,11 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
+        assetRepository.deleteAllByDocumentId(id);
+        permissionRepository.deleteAllByDocumentId(id);
+        versionRepository.deleteAllByDocumentId(id);
         documentRepository.deleteById(id);
     }
 

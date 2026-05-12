@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(New-Item -ItemType File -Force \"c:\\\\Users\\\\krist\\\\OneDrive\\\\Desktop\\\\Web Project\\\\wordy\\\\frontend\\\\src\\\\components\\\\.gitkeep\")",
+      "Bash(New-Item -ItemType File -Force \"c:\\\\Users\\\\krist\\\\OneDrive\\\\Desktop\\\\Web Project\\\\wordy\\\\frontend\\\\src\\\\lib\\\\.gitkeep\")",
+      "Bash(New-Item -ItemType File -Force \"c:\\\\Users\\\\krist\\\\OneDrive\\\\Desktop\\\\Web Project\\\\wordy\\\\frontend\\\\src\\\\pages\\\\.gitkeep\")",
+      "Bash(New-Item -ItemType File -Force \"c:\\\\Users\\\\krist\\\\OneDrive\\\\Desktop\\\\Web Project\\\\wordy\\\\frontend\\\\src\\\\services\\\\.gitkeep\")",
+      "Bash(New-Item -ItemType File -Force \"c:\\\\Users\\\\krist\\\\OneDrive\\\\Desktop\\\\Web Project\\\\wordy\\\\frontend\\\\src\\\\types\\\\.gitkeep\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\krist\\OneDrive\\Desktop\\Web Project\\wordy\\frontend\\src\\components"
+    ]
+  }
+}

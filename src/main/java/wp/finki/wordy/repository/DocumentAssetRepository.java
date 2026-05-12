@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface DocumentAssetRepository extends JpaRepository<DocumentAsset, Long> {
     List<DocumentAsset> findAllByDocumentId(Long documentId);
+    void deleteAllByDocumentId(Long documentId);
 }
 

@@ -11,7 +11,6 @@ public interface CollabService {
 
     void unsubscribeFromDocument(Long docId, MessageListener listener);
 
-    //Returns the Redis pub/sub channel name for a document.
     static String channelFor(Long docId) {
         return "collab:doc:" + docId;
     }
