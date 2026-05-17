@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EditorShell from '../components/EditorShell.jsx';
 import ShareModal from '../components/documents/ShareModal.jsx';
 import VersionHistory from '../components/versions/VersionHistory.jsx';
 import FileAttachment from '../components/assets/FileAttachment.jsx';
 import { getAssets } from '../services/assetService.js';
+import { exportDocumentAsPdf, exportDocumentAsDocx, getDocumentById } from '../services/documentService.js';
 import { JWT_KEY, Routes } from '../lib/constants.js';
 
 function getCurrentUsername() {
@@ -27,6 +28,8 @@ export default function EditorPage() {
   const [showVersions, setShowVersions] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const [assets, setAssets] = useState([]);
+  const [docTitle, setDocTitle] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   async function loadAssets() {
     try {
@@ -35,11 +38,47 @@ export default function EditorPage() {
     } catch {}
   }
 
+  async function loadDocumentTitle() {
+    try {
+      const doc = await getDocumentById(id);
+      if (doc?.title) {
+        setDocTitle(doc.title);
+      }
+    } catch {}
+  }
+
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      await exportDocumentAsPdf(id, docTitle);
+    } catch (err) {
+      alert('Failed to export as PDF: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleExportDocx() {
+    setExporting(true);
+    try {
+      await exportDocumentAsDocx(id, docTitle);
+    } catch (err) {
+      alert('Failed to export as DOCX: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function handleVersionRestored() {
     setShowVersions(false);
     // EditorShell will re-fetch document via useDocument on next render
     window.location.reload();
   }
+
+  // Load document title on mount
+  useEffect(() => {
+    loadDocumentTitle();
+  }, [id]);
 
   return (
     <div className="editor-page">
@@ -57,6 +96,14 @@ export default function EditorPage() {
           <button onClick={() => setShowShare(true)}>
             🔗 Share
           </button>
+          <div className="editor-page__export-group">
+            <button onClick={handleExportPdf} disabled={exporting} title="Export as PDF">
+              📄 PDF
+            </button>
+            <button onClick={handleExportDocx} disabled={exporting} title="Export as DOCX">
+              📝 DOCX
+            </button>
+          </div>
         </div>
       </div>
 

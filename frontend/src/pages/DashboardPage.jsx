@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getDocumentsByOwner } from '../services/documentService.js';
+import { logout } from '../services/authService.js';
 import DocumentCard from '../components/documents/DocumentCard.jsx';
 import NewDocumentButton from '../components/documents/NewDocumentButton.jsx';
 import { JWT_KEY } from '../lib/constants.js';
@@ -43,8 +44,16 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <header className="dashboard-page__header">
-        <h1 className="dashboard-page__title">My Documents</h1>
-        {username && <NewDocumentButton username={username} />}
+        <div>
+          <h1 className="dashboard-page__title">My Documents</h1>
+          {username && <span className="dashboard-page__username">Welcome, {username}</span>}
+        </div>
+        <div className="dashboard-page__header-actions">
+          {username && <NewDocumentButton username={username} />}
+          <button className="dashboard-page__logout" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
       </header>
 
       {error && <p className="dashboard-page__error">{error}</p>}

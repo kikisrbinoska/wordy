@@ -131,3 +131,42 @@ export function restoreVersion(docId, versionId) {
     method: 'POST',
   });
 }
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+/**
+ * Export document as PDF and trigger download
+ * @param {number|string} docId
+ * @param {string} filename Optional filename without extension
+ */
+export async function exportDocumentAsPdf(docId, filename = null) {
+  const blob = await apiFetch(`/api/documents/${docId}/export/pdf`);
+  downloadBlob(blob, filename || `document-${docId}.pdf`);
+}
+
+/**
+ * Export document as DOCX and trigger download
+ * @param {number|string} docId
+ * @param {string} filename Optional filename without extension
+ */
+export async function exportDocumentAsDocx(docId, filename = null) {
+  const blob = await apiFetch(`/api/documents/${docId}/export/docx`);
+  downloadBlob(blob, filename || `document-${docId}.docx`);
+}
+
+/**
+ * Helper function to download a blob as a file
+ * @param {Blob} blob
+ * @param {string} filename
+ */
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
