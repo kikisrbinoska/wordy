@@ -12,7 +12,8 @@ export const SystemRole = /** @type {const} */ ({
 });
 
 export const Routes = {
-  DASHBOARD: '/',
+  LANDING: '/',
+  DASHBOARD: '/dashboard',
   EDITOR: (id = ':id') => `/document/${id}`,
   LOGIN: '/login',
   REGISTER: '/register',

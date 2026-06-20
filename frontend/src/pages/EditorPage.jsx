@@ -10,6 +10,7 @@ import { getAssets } from '../services/assetService.js';
 import { getDocumentById } from '../services/documentService.js';
 import { exportToDocx } from '../lib/exportDocx.js';
 import { JWT_KEY, Routes } from '../lib/constants.js';
+import logo from '../components/assets/logo_wordy.png';
 
 function getCurrentUsername() {
   const token = localStorage.getItem(JWT_KEY);
@@ -121,9 +122,12 @@ export default function EditorPage() {
   return (
     <div className="editor-page">
       <div className="editor-page__nav">
-        <button className="editor-page__back" onClick={() => navigate(Routes.DASHBOARD)}>
-          ← Back
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src={logo} alt="Wordy" className="editor-page__nav-logo" onClick={() => navigate(Routes.DASHBOARD)} style={{ cursor: 'pointer' }} />
+          <button className="editor-page__back" onClick={() => navigate(Routes.DASHBOARD)}>
+            ← Dashboard
+          </button>
+        </div>
         <div className="editor-page__nav-actions">
           <button onClick={() => { setShowAttachments((v) => !v); loadAssets(); }}>
             📎 Attachments

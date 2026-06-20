@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../services/authService.js';
 import { Routes } from '../lib/constants.js';
+import logo from '../components/assets/logo_wordy.png';
 import '../styles/auth.css';
 
 export default function LoginPage() {
@@ -18,7 +19,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       await login(username, password);
       navigate(from, { replace: true });
@@ -32,8 +32,8 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>📝 Wordy</h1>
-        <h2>Login</h2>
+        <img src={logo} alt="Wordy" className="auth-card__logo" />
+        <h2>Welcome Back</h2>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -65,18 +65,15 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" disabled={loading} className="auth-button">
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
         <p className="auth-footer">
           Don't have an account?{' '}
-          <a href={Routes.REGISTER} className="auth-link">
-            Create one
-          </a>
+          <a href={Routes.REGISTER} className="auth-link">Create one</a>
         </p>
       </div>
     </div>
   );
 }
-

@@ -6,7 +6,7 @@ export default function ProtectedRoute() {
   const location = useLocation();
   
   if (!isAuthenticated()) {
-    return <Navigate to={Routes.LOGIN} state={{ from: location }} replace />;
+    return <Navigate to={Routes.LANDING} state={{ from: location }} replace />;
   }
   return <Outlet />;
 }
