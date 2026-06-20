@@ -18,14 +18,15 @@ export function useDocument(docId) {
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving' | 'unsaved' | 'error'
 
   const autosaveTimer = useRef(null);
+  const pendingContentRef = useRef(null);
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
+  const loadDoc = useCallback(() => {
     if (!docId) return;
     setLoading(true);
     setError(null);
-
+    clearTimeout(autosaveTimer.current);
     getDocumentById(docId)
       .then((doc) => {
         setDocument(doc);
@@ -34,6 +35,10 @@ export function useDocument(docId) {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [docId]);
+
+  useEffect(() => {
+    loadDoc();
+  }, [loadDoc]);
 
   // ── Save content ──────────────────────────────────────────────────────────
 
@@ -75,18 +80,32 @@ export function useDocument(docId) {
 
   const scheduleAutosave = useCallback(
     (content) => {
+      pendingContentRef.current = content;
       setSaveStatus('unsaved');
       clearTimeout(autosaveTimer.current);
       autosaveTimer.current = setTimeout(() => {
+        pendingContentRef.current = null;
         saveContent(content);
       }, AUTOSAVE_DEBOUNCE_MS);
     },
     [saveContent]
   );
 
+  // Flush any pending autosave synchronously when the component unmounts
+  // so navigating away before the debounce fires doesn't lose content.
   useEffect(() => {
-    return () => clearTimeout(autosaveTimer.current);
-  }, []);
+    return () => {
+      clearTimeout(autosaveTimer.current);
+      if (pendingContentRef.current !== null) {
+        patchDocumentContent(
+          docId,
+          typeof pendingContentRef.current === 'string'
+            ? pendingContentRef.current
+            : JSON.stringify(pendingContentRef.current)
+        ).catch(() => {});
+      }
+    };
+  }, [docId]);
 
-  return { document, loading, error, saveStatus, saveContent, saveTitle, scheduleAutosave };
+  return { document, loading, error, saveStatus, saveContent, saveTitle, scheduleAutosave, reloadDoc: loadDoc };
 }

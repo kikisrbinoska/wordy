@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useEditor } from '@tiptap/react';
 import { tiptapExtensions } from '../lib/tiptapExtensions.js';
 import { useDocumentCollab } from '../hooks/useDocumentCollab.js';
@@ -16,34 +16,86 @@ import PresenceBar from './collab/PresenceBar.jsx';
  *
  * @param {{ docId: number|string, username: string }} props
  */
-export default function EditorShell({ docId, username }) {
+export default function EditorShell({ docId, username, onReloadDoc, onEditorReady }) {
   const [zoom, setZoom] = useState(100);
   const [showNavigator, setShowNavigator] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [trackChanges, setTrackChanges] = useState(false);
   const [presenceUsers, setPresenceUsers] = useState([]);
 
-  const { document: doc, loading, error, saveStatus, scheduleAutosave } = useDocument(docId);
+  const { document: doc, loading, error, saveStatus, scheduleAutosave, saveTitle, reloadDoc } = useDocument(docId);
+
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
+  const titleInputRef = useRef(null);
+
+  // Prevents autosave from firing before the document content is loaded into the editor.
+  // Without this, the empty editor fires onUpdate on mount and schedules a save of ""
+  // which overwrites the real content (e.g. after a version restore).
+  const contentLoadedRef = useRef(false);
+
+  // Shared ref: useDocumentCollab sets this to true while applying a remote
+  // SSE update so the onUpdate callback below knows to skip autosave.
+  const isRemoteUpdateRef = useRef(false);
 
   const editor = useEditor({
     extensions: tiptapExtensions,
     content: '',
     onUpdate: ({ editor }) => {
+      if (!contentLoadedRef.current) return;
+      if (isRemoteUpdateRef.current) return;
       scheduleAutosave(JSON.stringify(editor.getJSON()));
     },
   });
 
-  // Populate editor once doc loads
+  // Sync track-changes toggle into the ProseMirror plugin state
   useEffect(() => {
-    if (!doc?.content || !editor || editor.isDestroyed) return;
-    try {
-      editor.commands.setContent(JSON.parse(doc.content), false);
-    } catch {
-      editor.commands.setContent(doc.content, false);
-    }
-  }, [doc?.content, editor]);
+    if (!editor || editor.isDestroyed) return;
+    editor.commands.setTrackChanges(trackChanges);
+  }, [trackChanges, editor]);
 
-  useDocumentCollab(docId, editor);
+  // Populate editor once doc loads (doc?.content may be null/empty for new documents)
+  useEffect(() => {
+    if (!doc || !editor || editor.isDestroyed) return;
+    contentLoadedRef.current = false;
+    if (doc.content) {
+      try {
+        editor.commands.setContent(JSON.parse(doc.content), false);
+      } catch {
+        editor.commands.setContent(doc.content, false);
+      }
+    } else {
+      editor.commands.clearContent(false);
+    }
+    contentLoadedRef.current = true;
+  }, [doc?.id, editor]);
+
+  useDocumentCollab(docId, editor, isRemoteUpdateRef);
+
+  useEffect(() => {
+    onReloadDoc?.(reloadDoc);
+  }, [reloadDoc]);
+
+  useEffect(() => {
+    if (editor) onEditorReady?.(editor);
+  }, [editor]);
+
+  function startEditingTitle() {
+    setTitleValue(doc?.title ?? 'Untitled');
+    setEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.select(), 0);
+  }
+
+  function commitTitle() {
+    const trimmed = titleValue.trim() || 'Untitled';
+    saveTitle(trimmed);
+    setEditingTitle(false);
+  }
+
+  function onTitleKeyDown(e) {
+    if (e.key === 'Enter') commitTitle();
+    if (e.key === 'Escape') setEditingTitle(false);
+  }
 
   if (loading) {
     return <div className="editor-shell editor-shell--loading">Loading document…</div>;
@@ -55,7 +107,24 @@ export default function EditorShell({ docId, username }) {
   return (
     <div className="editor-shell">
       <div className="editor-shell__topbar">
-        <span className="editor-shell__title">{doc?.title ?? 'Untitled'}</span>
+        {editingTitle ? (
+          <input
+            ref={titleInputRef}
+            className="editor-shell__title-input"
+            value={titleValue}
+            onChange={(e) => setTitleValue(e.target.value)}
+            onBlur={commitTitle}
+            onKeyDown={onTitleKeyDown}
+          />
+        ) : (
+          <span
+            className="editor-shell__title editor-shell__title--editable"
+            onClick={startEditingTitle}
+            title="Click to rename"
+          >
+            {doc?.title ?? 'Untitled'}
+          </span>
+        )}
         <PresenceBar users={presenceUsers} />
       </div>
 
@@ -86,7 +155,11 @@ export default function EditorShell({ docId, username }) {
 
         {showComments && (
           <aside className="editor-shell__sidebar editor-shell__sidebar--right">
-            <CommentsPanel docId={docId} currentUsername={username} />
+            <CommentsPanel
+              docId={docId}
+              currentUsername={username}
+              onClose={() => setShowComments(false)}
+            />
           </aside>
         )}
       </div>

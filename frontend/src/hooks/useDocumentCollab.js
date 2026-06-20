@@ -12,13 +12,20 @@ import { COLLAB_DEBOUNCE_MS } from '../lib/constants.js';
  *
  * @param {number|string} docId  - Document ID
  * @param {import('@tiptap/react').Editor|null} editor - Tiptap editor instance
+ * @param {React.MutableRefObject<boolean>} [isRemoteUpdateRef] - Optional shared ref;
+ *   set to true while applying a remote update so the caller's onUpdate can skip autosave.
  */
-export function useDocumentCollab(docId, editor) {
+export function useDocumentCollab(docId, editor, isRemoteUpdateRef) {
   const debounceTimer = useRef(null);
   const eventSourceRef = useRef(null);
-  // Tracks whether the next editor "update" event was caused by an incoming
-  // remote change so we don't echo it back to the server.
-  const isRemoteUpdate = useRef(false);
+  // Keep a ref to the latest editor so the SSE handler always sees it
+  // without needing to tear down and re-open the EventSource.
+  const editorRef = useRef(editor);
+  useEffect(() => { editorRef.current = editor; }, [editor]);
+
+  // Fallback internal ref when the caller doesn't pass one in.
+  const internalRemoteRef = useRef(false);
+  const isRemoteUpdate = isRemoteUpdateRef ?? internalRemoteRef;
 
   // ── SSE subscription ──────────────────────────────────────────────────────
 
@@ -27,19 +34,20 @@ export function useDocumentCollab(docId, editor) {
 
     const token = getToken();
     // EventSource cannot set headers, so the JWT is sent as a query param.
-    // BASE_URL is '' in dev (relative URL → Vite proxy) or the full origin in prod.
-    const origin = BASE_URL || window.location.origin;
-    const url = `${origin}/api/collab/stream/${docId}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    // Use BASE_URL when set (prod), otherwise a relative URL so Vite proxies it.
+    const base = BASE_URL || '';
+    const url = `${base}/api/collab/stream/${docId}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
     const es = new EventSource(url);
     eventSourceRef.current = es;
 
     es.addEventListener('doc-update', (event) => {
-      if (!editor) return;
+      const currentEditor = editorRef.current;
+      if (!currentEditor) return;
       try {
         const dto = JSON.parse(event.data);
         if (dto.type === 'text-change' && dto.content) {
           isRemoteUpdate.current = true;
-          editor.commands.setContent(dto.content, false);
+          currentEditor.commands.setContent(dto.content, false);
           isRemoteUpdate.current = false;
         }
       } catch (err) {
@@ -59,9 +67,7 @@ export function useDocumentCollab(docId, editor) {
       es.close();
       eventSourceRef.current = null;
     };
-  }, [docId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // editor is intentionally excluded — we only need it inside the callback,
-  // not as a dep for opening/closing the EventSource.
+  }, [docId]);
 
   // ── Outbound change publishing ────────────────────────────────────────────
 

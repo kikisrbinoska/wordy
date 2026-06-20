@@ -5,7 +5,7 @@ import {
   changeCollaboratorRole,
   removeCollaborator,
 } from '../../services/documentService.js';
-import { DocumentRole } from '../../lib/constants.js';
+import { DocumentRole, Routes } from '../../lib/constants.js';
 
 const ROLES = Object.values(DocumentRole);
 
@@ -19,6 +19,9 @@ export default function ShareModal({ docId, ownerUsername, onClose }) {
   const [invitee, setInvitee] = useState('');
   const [inviteRole, setInviteRole] = useState(DocumentRole.EDITOR);
   const [inviting, setInviting] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const docLink = `${window.location.origin}${Routes.EDITOR(docId)}`;
 
   useEffect(() => {
     loadCollaborators();
@@ -74,6 +77,13 @@ export default function ShareModal({ docId, ownerUsername, onClose }) {
     }
   }
 
+  function handleCopyLink() {
+    navigator.clipboard.writeText(docLink).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="share-modal" onClick={(e) => e.stopPropagation()}>
@@ -104,6 +114,25 @@ export default function ShareModal({ docId, ownerUsername, onClose }) {
             {inviting ? 'Inviting…' : 'Invite'}
           </button>
         </form>
+
+        <div className="share-modal__link-section">
+          <span className="share-modal__link-label">Document link</span>
+          <div className="share-modal__link-row">
+            <input
+              readOnly
+              value={docLink}
+              className="share-modal__link-input"
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              type="button"
+              className="share-modal__copy-btn"
+              onClick={handleCopyLink}
+            >
+              {copiedLink ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
+        </div>
 
         {loading ? (
           <p>Loading collaborators…</p>

@@ -9,6 +9,18 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:9096',
         changeOrigin: true,
+        // Disable response buffering so SSE events stream through immediately
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Connection', 'keep-alive');
+            proxyReq.setHeader('Cache-Control', 'no-cache');
+          });
+          proxy.on('proxyRes', (proxyRes) => {
+            if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+              proxyRes.headers['x-accel-buffering'] = 'no';
+            }
+          });
+        },
       },
     },
   },

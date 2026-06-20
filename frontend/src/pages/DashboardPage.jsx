@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDocumentsByOwner } from '../services/documentService.js';
+import { getDocumentsByOwner, getSharedDocuments } from '../services/documentService.js';
 import { logout } from '../services/authService.js';
 import DocumentCard from '../components/documents/DocumentCard.jsx';
 import NewDocumentButton from '../components/documents/NewDocumentButton.jsx';
@@ -18,6 +18,7 @@ function getCurrentUsername() {
 
 export default function DashboardPage() {
   const [documents, setDocuments] = useState([]);
+  const [sharedDocuments, setSharedDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,8 +33,12 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const docs = await getDocumentsByOwner(username);
-      setDocuments(docs ?? []);
+      const [owned, shared] = await Promise.all([
+        getDocumentsByOwner(username),
+        getSharedDocuments(username),
+      ]);
+      setDocuments(owned ?? []);
+      setSharedDocuments(shared ?? []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -60,16 +65,38 @@ export default function DashboardPage() {
 
       {loading ? (
         <div className="dashboard-page__loading">Loading documents…</div>
-      ) : documents.length === 0 ? (
-        <div className="dashboard-page__empty">
-          <p>No documents yet. Create one to get started.</p>
-        </div>
       ) : (
-        <div className="dashboard-page__grid">
-          {documents.map((doc) => (
-            <DocumentCard key={doc.id} document={doc} onDeleted={loadDocuments} />
-          ))}
-        </div>
+        <>
+          {documents.length === 0 && sharedDocuments.length === 0 ? (
+            <div className="dashboard-page__empty">
+              <p>No documents yet. Create one to get started.</p>
+            </div>
+          ) : (
+            <>
+              {documents.length > 0 && (
+                <section className="dashboard-page__section">
+                  <h2 className="dashboard-page__section-title">My Documents</h2>
+                  <div className="dashboard-page__grid">
+                    {documents.map((doc) => (
+                      <DocumentCard key={doc.id} document={doc} onDeleted={loadDocuments} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {sharedDocuments.length > 0 && (
+                <section className="dashboard-page__section">
+                  <h2 className="dashboard-page__section-title">Shared with Me</h2>
+                  <div className="dashboard-page__grid">
+                    {sharedDocuments.map((doc) => (
+                      <DocumentCard key={doc.id} document={doc} onDeleted={loadDocuments} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );

@@ -15,6 +15,7 @@ public class DocumentVersion {
     @ManyToOne
     private User author;
 
+    @Lob
     private String snapshot;
 
     private Integer versionNumber;

@@ -108,6 +108,14 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.findByOwner(username));
     }
 
+    @Operation(summary = "Get all documents shared with a user (collaborator, not owner)")
+    @ApiResponse(responseCode = "200", description = "List of shared documents")
+    @GetMapping("/shared/{username}")
+    public ResponseEntity<List<Document>> findSharedWith(
+            @Parameter(description = "Username") @PathVariable String username) {
+        return ResponseEntity.ok(documentService.findSharedWith(username));
+    }
+
 
     @Operation(summary = "Get the current content of a document")
     @ApiResponses({

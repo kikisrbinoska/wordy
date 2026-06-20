@@ -4,9 +4,9 @@ import CommentInput from '../comments/CommentInput.jsx';
 import { apiFetch } from '../../lib/api.js';
 
 /**
- * @param {{ docId: number|string, currentUsername: string }} props
+ * @param {{ docId: number|string, currentUsername: string, onClose: () => void }} props
  */
-export default function CommentsPanel({ docId, currentUsername }) {
+export default function CommentsPanel({ docId, currentUsername, onClose }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,6 +18,7 @@ export default function CommentsPanel({ docId, currentUsername }) {
 
   async function loadComments() {
     setLoading(true);
+    setError(null);
     try {
       const data = await apiFetch(`/api/documents/${docId}/comments`);
       setComments(data ?? []);
@@ -29,11 +30,12 @@ export default function CommentsPanel({ docId, currentUsername }) {
   }
 
   async function handleAdd(content) {
+    setError(null);
     try {
       await apiFetch(`/api/documents/${docId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, authorUsername: currentUsername }),
+        body: JSON.stringify({ content }),
       });
       await loadComments();
     } catch (err) {
@@ -42,11 +44,12 @@ export default function CommentsPanel({ docId, currentUsername }) {
   }
 
   async function handleReply(parentId, content) {
+    setError(null);
     try {
       await apiFetch(`/api/documents/${docId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, authorUsername: currentUsername, parentCommentId: parentId }),
+        body: JSON.stringify({ content, parentCommentId: parentId }),
       });
       await loadComments();
     } catch (err) {
@@ -55,9 +58,22 @@ export default function CommentsPanel({ docId, currentUsername }) {
   }
 
   async function handleResolve(commentId) {
+    setError(null);
     try {
       await apiFetch(`/api/documents/${docId}/comments/${commentId}/resolve`, {
         method: 'PATCH',
+      });
+      await loadComments();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDelete(commentId) {
+    setError(null);
+    try {
+      await apiFetch(`/api/documents/${docId}/comments/${commentId}`, {
+        method: 'DELETE',
       });
       await loadComments();
     } catch (err) {
@@ -69,13 +85,19 @@ export default function CommentsPanel({ docId, currentUsername }) {
 
   return (
     <div className="comments-panel">
-      <h3 className="comments-panel__title">Comments</h3>
+      <div className="comments-panel__header">
+        <h3 className="comments-panel__title">Comments</h3>
+        {onClose && (
+          <button className="comments-panel__close" onClick={onClose} title="Close comments">✕</button>
+        )}
+      </div>
+
       {error && <p className="comments-panel__error">{error}</p>}
 
-      <CommentInput onSubmit={handleAdd} placeholder="Add a comment to this document…" />
+      <CommentInput onSubmit={handleAdd} placeholder="Add a comment…" />
 
       {loading ? (
-        <p className="comments-panel__loading">Loading comments…</p>
+        <p className="comments-panel__loading">Loading…</p>
       ) : topLevel.length === 0 ? (
         <p className="comments-panel__empty">No comments yet.</p>
       ) : (
@@ -87,8 +109,10 @@ export default function CommentsPanel({ docId, currentUsername }) {
                 ...comment,
                 replies: comments.filter((c) => c.parentComment?.id === comment.id),
               }}
+              currentUsername={currentUsername}
               onReply={handleReply}
               onResolve={handleResolve}
+              onDelete={handleDelete}
             />
           ))}
         </div>

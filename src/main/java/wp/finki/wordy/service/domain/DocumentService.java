@@ -17,6 +17,7 @@ public interface DocumentService {
     void deleteById(Long id);
 
     List<Document> findByOwner(String username);
+    List<Document> findSharedWith(String username);
     Optional<Document> updateContent(Long id, String content);
     Optional<Document> updateTitle(Long id, String title);
 

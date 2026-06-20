@@ -27,6 +27,10 @@ export function deleteAsset(assetId, uploaderUsername) {
 
 export function getAssetDownloadUrl(assetId) {
   const token = getToken();
-  // BASE_URL may be empty (relative) in dev — that's fine for <a href>
   return `${BASE_URL}/api/assets/${assetId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+}
+
+export function getAssetPreviewUrl(assetId) {
+  const token = getToken();
+  return `${BASE_URL}/api/assets/${assetId}/preview${token ? `?token=${encodeURIComponent(token)}` : ''}`;
 }

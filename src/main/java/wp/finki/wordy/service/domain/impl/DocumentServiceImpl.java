@@ -106,6 +106,15 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<Document> findSharedWith(String username) {
+        return permissionRepository
+                .findAllByUserUsernameAndRoleNot(username, DocumentRole.OWNER)
+                .stream()
+                .map(DocumentPermission::getDocument)
+                .toList();
+    }
+
+    @Override
     public Optional<Document> updateContent(Long id, String content) {
         Document doc = getDocument(id);
         doc.setContent(content);

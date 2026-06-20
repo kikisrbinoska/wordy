@@ -14,6 +14,10 @@ export function getDocumentsByOwner(username) {
   return apiFetch(`/api/documents/owner/${encodeURIComponent(username)}`);
 }
 
+export function getSharedDocuments(username) {
+  return apiFetch(`/api/documents/shared/${encodeURIComponent(username)}`);
+}
+
 export function getDocumentContent(docId) {
   return apiFetch(`/api/documents/${docId}/content`);
 }

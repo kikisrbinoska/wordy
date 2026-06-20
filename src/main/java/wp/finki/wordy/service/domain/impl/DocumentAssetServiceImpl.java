@@ -44,7 +44,17 @@ public class DocumentAssetServiceImpl implements DocumentAssetService {
 	}
 
 	private boolean hasAccess(Long docId, String username) {
-		return permissionRepository.findByDocumentIdAndUserUsername(docId, username).isPresent();
+		if (permissionRepository.findByDocumentIdAndUserUsername(docId, username).isPresent()) return true;
+		// Also allow the document owner even if no explicit permission row exists
+		return documentRepository.findById(docId)
+				.map(d -> d.getOwner() != null && username.equals(d.getOwner().getUsername()))
+				.orElse(false);
+	}
+
+	@Override
+	public DocumentAsset findById(Long assetId) {
+		return assetRepository.findById(assetId)
+				.orElseThrow(() -> new IllegalArgumentException("Asset not found: " + assetId));
 	}
 
 	@Override

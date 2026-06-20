@@ -13,8 +13,9 @@ public class Document {
     @ManyToOne
     private User owner;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String content;
-    @Column(columnDefinition = "bytea")
+    @Lob
     private byte[] ydocState;
 
     private Boolean is_template;

@@ -41,7 +41,7 @@ public class DocumentAssetController {
         return ResponseEntity.ok(asset);
     }
 
-    @Operation(summary = "Download an asset by ID")
+    @Operation(summary = "Download an asset by ID (forces browser download)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Asset file", content = @Content(mediaType = "application/octet-stream")),
             @ApiResponse(responseCode = "404", description = "Asset not found")
@@ -49,12 +49,36 @@ public class DocumentAssetController {
     @GetMapping("/assets/{assetId}/download")
     public ResponseEntity<byte[]> download(
             @Parameter(description = "Asset ID") @PathVariable Long assetId) {
+        DocumentAsset asset = assetService.findById(assetId);
         byte[] data = assetService.download(assetId);
-        // try to get MIME type from repository
+        MediaType mediaType = parseMediaType(asset.getMimeType());
+        String fileName = asset.getFileName() != null ? asset.getFileName() : ("asset-" + assetId);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=asset-" + assetId)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(mediaType)
                 .body(data);
+    }
+
+    @Operation(summary = "Preview an asset inline in the browser")
+    @ApiResponse(responseCode = "200", description = "Asset file served inline")
+    @GetMapping("/assets/{assetId}/preview")
+    public ResponseEntity<byte[]> preview(
+            @Parameter(description = "Asset ID") @PathVariable Long assetId) {
+        DocumentAsset asset = assetService.findById(assetId);
+        byte[] data = assetService.download(assetId);
+        MediaType mediaType = parseMediaType(asset.getMimeType());
+        String fileName = asset.getFileName() != null ? asset.getFileName() : ("asset-" + assetId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .contentType(mediaType)
+                .body(data);
+    }
+
+    private MediaType parseMediaType(String mimeType) {
+        if (mimeType != null && !mimeType.isBlank()) {
+            try { return MediaType.parseMediaType(mimeType); } catch (Exception ignored) {}
+        }
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     @Operation(summary = "List all assets for a document")

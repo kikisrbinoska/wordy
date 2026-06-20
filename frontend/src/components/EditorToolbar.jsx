@@ -57,6 +57,7 @@ export default function EditorToolbar({
         {activeTab === 'Layout' && <LayoutTab editor={editor} />}
         {activeTab === 'Review' && (
           <ReviewTab
+            editor={editor}
             showComments={showComments}
             onToggleComments={onToggleComments}
             trackChanges={trackChanges}

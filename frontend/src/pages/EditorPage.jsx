@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import EditorShell from '../components/EditorShell.jsx';
 import ShareModal from '../components/documents/ShareModal.jsx';
 import VersionHistory from '../components/versions/VersionHistory.jsx';
 import FileAttachment from '../components/assets/FileAttachment.jsx';
 import { getAssets } from '../services/assetService.js';
-import { exportDocumentAsPdf, exportDocumentAsDocx, getDocumentById } from '../services/documentService.js';
+import { getDocumentById } from '../services/documentService.js';
+import { exportToDocx } from '../lib/exportDocx.js';
 import { JWT_KEY, Routes } from '../lib/constants.js';
 
 function getCurrentUsername() {
@@ -30,6 +33,8 @@ export default function EditorPage() {
   const [assets, setAssets] = useState([]);
   const [docTitle, setDocTitle] = useState('');
   const [exporting, setExporting] = useState(false);
+  const reloadDocRef = useRef(null);
+  const editorRef = useRef(null);
 
   async function loadAssets() {
     try {
@@ -48,9 +53,41 @@ export default function EditorPage() {
   }
 
   async function handleExportPdf() {
+    const contentEl = document.querySelector('.editor-canvas__content');
+    if (!contentEl) return;
     setExporting(true);
     try {
-      await exportDocumentAsPdf(id, docTitle);
+      const canvas = await html2canvas(contentEl, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const printW = pageW - margin * 2;
+      const printH = (canvas.height * printW) / canvas.width;
+
+      let yOffset = 0;
+      let remainingH = printH;
+
+      while (remainingH > 0) {
+        const sliceH = Math.min(remainingH, pageH - margin * 2);
+        const srcY = (yOffset / printH) * canvas.height;
+        const srcH = (sliceH / printH) * canvas.height;
+
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcH;
+        sliceCanvas.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        if (yOffset > 0) pdf.addPage();
+        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, printW, sliceH);
+
+        yOffset += sliceH;
+        remainingH -= sliceH;
+      }
+
+      pdf.save(`${docTitle || 'document'}.pdf`);
     } catch (err) {
       alert('Failed to export as PDF: ' + err.message);
     } finally {
@@ -59,9 +96,11 @@ export default function EditorPage() {
   }
 
   async function handleExportDocx() {
+    if (!editorRef.current) return;
     setExporting(true);
     try {
-      await exportDocumentAsDocx(id, docTitle);
+      const json = editorRef.current.getJSON();
+      await exportToDocx(json, docTitle || 'document');
     } catch (err) {
       alert('Failed to export as DOCX: ' + err.message);
     } finally {
@@ -71,8 +110,7 @@ export default function EditorPage() {
 
   function handleVersionRestored() {
     setShowVersions(false);
-    // EditorShell will re-fetch document via useDocument on next render
-    window.location.reload();
+    reloadDocRef.current?.();
   }
 
   // Load document title on mount
@@ -107,7 +145,12 @@ export default function EditorPage() {
         </div>
       </div>
 
-      <EditorShell docId={id} username={username} />
+      <EditorShell
+        docId={id}
+        username={username}
+        onReloadDoc={(fn) => { reloadDocRef.current = fn; }}
+        onEditorReady={(ed) => { editorRef.current = ed; }}
+      />
 
       {showAttachments && (
         <div className="editor-page__panel">
@@ -116,6 +159,7 @@ export default function EditorPage() {
             username={username}
             assets={assets}
             onChanged={loadAssets}
+            onClose={() => setShowAttachments(false)}
           />
         </div>
       )}

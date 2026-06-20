@@ -10,6 +10,7 @@ public interface DocumentAssetService {
 
     DocumentAsset upload(Long docId, String uploaderUsername,
                          MultipartFile file) throws IOException;
+    DocumentAsset findById(Long assetId);
     byte[] download(Long assetId);
     List<DocumentAsset> findByDocument(Long docId);
     void delete(Long assetId, String username);
