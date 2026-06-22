@@ -19,6 +19,8 @@ import { TrackChangesExtension, InsertionMark, DeletionMark } from './trackChang
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 
 // Extends BulletList to support a listStyle attribute (disc/circle/square/arrow/check)
 const StyledBulletList = BulletList.extend({
@@ -141,33 +143,40 @@ const FontSize = TextStyle.extend({
   },
 });
 
-export const tiptapExtensions = [
-  StarterKit.configure({
-    heading: { levels: [1, 2, 3, 4, 5, 6] },
-    history: true,
-    bulletList: false,  // replaced by StyledBulletList
-    paragraph: false,   // replaced by IndentableParagraph
-  }),
-  StyledBulletList,
-  IndentableParagraph,
-  IndentCommands,
-  Underline,
-  FontSize,
-  Color,
-  Highlight.configure({ multicolor: true }),
-  FontFamily,
-  TextAlign.configure({ types: ['heading', 'paragraph'] }),
-  Table.configure({ resizable: true }),
-  TableRow,
-  TableHeader,
-  TableCell,
-  TaskList,
-  TaskItem.configure({ nested: true }),
-  ResizableImage,
-  InsertionMark,
-  DeletionMark,
-  TrackChangesExtension,
-  Link.configure({ openOnClick: false, autolink: true }),
-  Placeholder.configure({ placeholder: 'Start typing…' }),
-  CharacterCount,
-];
+export function buildExtensions(ydoc, provider, user) {
+  return [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3, 4, 5, 6] },
+      history: false,
+      bulletList: false,
+      paragraph: false,
+    }),
+    Collaboration.configure({ document: ydoc }),
+    CollaborationCursor.configure({
+      provider,
+      user: { name: user?.name ?? 'Anonymous', color: user?.color ?? '#f783ac' },
+    }),
+    StyledBulletList,
+    IndentableParagraph,
+    IndentCommands,
+    Underline,
+    FontSize,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    FontFamily,
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    Table.configure({ resizable: true }),
+    TableRow,
+    TableHeader,
+    TableCell,
+    TaskList,
+    TaskItem.configure({ nested: true }),
+    ResizableImage,
+    InsertionMark,
+    DeletionMark,
+    TrackChangesExtension,
+    Link.configure({ openOnClick: false, autolink: true }),
+    Placeholder.configure({ placeholder: 'Start typing…' }),
+    CharacterCount,
+  ];
+}

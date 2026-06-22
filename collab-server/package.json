@@ -1,0 +1,11 @@
+{
+  "name": "wordy-collab-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@hocuspocus/server": "^2.13.4"
+  }
+}

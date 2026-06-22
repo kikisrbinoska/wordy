@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useEditor } from '@tiptap/react';
-import { tiptapExtensions } from '../lib/tiptapExtensions.js';
+import { buildExtensions } from '../lib/tiptapExtensions.js';
 import { useDocumentCollab } from '../hooks/useDocumentCollab.js';
 import { useDocument } from '../hooks/useDocument.js';
 
@@ -29,48 +29,19 @@ export default function EditorShell({ docId, username, onReloadDoc, onEditorRead
   const [titleValue, setTitleValue] = useState('');
   const titleInputRef = useRef(null);
 
-  // Prevents autosave from firing before the document content is loaded into the editor.
-  // Without this, the empty editor fires onUpdate on mount and schedules a save of ""
-  // which overwrites the real content (e.g. after a version restore).
-  const contentLoadedRef = useRef(false);
-
-  // Shared ref: useDocumentCollab sets this to true while applying a remote
-  // SSE update so the onUpdate callback below knows to skip autosave.
-  const isRemoteUpdateRef = useRef(false);
+  const { ydoc, provider, user } = useDocumentCollab(docId, username);
 
   const editor = useEditor({
-    extensions: tiptapExtensions,
-    content: '',
+    extensions: buildExtensions(ydoc, provider, user),
     onUpdate: ({ editor }) => {
-      if (!contentLoadedRef.current) return;
-      if (isRemoteUpdateRef.current) return;
       scheduleAutosave(JSON.stringify(editor.getJSON()));
     },
   });
 
-  // Sync track-changes toggle into the ProseMirror plugin state
   useEffect(() => {
     if (!editor || editor.isDestroyed) return;
     editor.commands.setTrackChanges(trackChanges);
   }, [trackChanges, editor]);
-
-  // Populate editor once doc loads (doc?.content may be null/empty for new documents)
-  useEffect(() => {
-    if (!doc || !editor || editor.isDestroyed) return;
-    contentLoadedRef.current = false;
-    if (doc.content) {
-      try {
-        editor.commands.setContent(JSON.parse(doc.content), false);
-      } catch {
-        editor.commands.setContent(doc.content, false);
-      }
-    } else {
-      editor.commands.clearContent(false);
-    }
-    contentLoadedRef.current = true;
-  }, [doc?.id, editor]);
-
-  useDocumentCollab(docId, editor, isRemoteUpdateRef);
 
   useEffect(() => {
     onReloadDoc?.(reloadDoc);

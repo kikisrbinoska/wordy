@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hocuspocus/provider": "^4.3.0",
     "@tiptap/extension-character-count": "^2.x",
     "@tiptap/extension-collaboration": "^2.x",
     "@tiptap/extension-collaboration-cursor": "^2.x",
@@ -34,7 +35,8 @@
     "jspdf": "^4.2.1",
     "react": "^18.x",
     "react-dom": "^18.x",
-    "react-router-dom": "^6.x"
+    "react-router-dom": "^6.x",
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.x",
