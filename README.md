@@ -1,7 +1,7 @@
 # Wordy — Collaborative Document Editor
 
-**Demo:** [link]
-
+**Demo:**
+(https://drive.google.com/file/d/1Bev74rz7PskK94qW_txiRKu0tYjQR5jF/view?usp=sharing)
 ---
 
 ## Project Members
