@@ -1,5 +1,7 @@
 package wp.finki.wordy.config;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,11 +36,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String username = jwtService.extractUsername(token);
+        String username;
+        try {
+            username = jwtService.extractUsername(token);
+        } catch (ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token expired");
+            return;
+        } catch (JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid token");
+            return;
+        }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Validate token by signature + expiry only — no DB lookup needed.
-            // Controllers that need the full User entity load it themselves via the username principal.
             if (jwtService.isTokenValid(token, username)) {
                 UserDetails principal = User.withUsername(username)
                         .password("")

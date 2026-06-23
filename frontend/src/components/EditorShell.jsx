@@ -39,6 +39,24 @@ export default function EditorShell({ docId, username, onReloadDoc, onEditorRead
   });
 
   useEffect(() => {
+    if (!editor || editor.isDestroyed || !provider || !doc) return;
+
+    const loadFromDb = () => {
+      const isEmpty = editor.isEmpty;
+      if (isEmpty && doc.content) {
+        try {
+          editor.commands.setContent(JSON.parse(doc.content), false);
+        } catch {
+          editor.commands.setContent(doc.content, false);
+        }
+      }
+    };
+
+    provider.on('synced', loadFromDb);
+    return () => provider.off('synced', loadFromDb);
+  }, [editor, provider, doc]);
+
+  useEffect(() => {
     if (!editor || editor.isDestroyed) return;
     editor.commands.setTrackChanges(trackChanges);
   }, [trackChanges, editor]);
